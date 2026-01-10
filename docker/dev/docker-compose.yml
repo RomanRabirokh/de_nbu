@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:15
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  airflow:
+    build:
+      context: .
+      dockerfile: ./docker/dev/airflow/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      PYTHONPATH: /opt/airflow:/opt/airflow/nbu
+    command:
+      bash -c "
+      poetry install --no-interaction --no-root &&
+      airflow scheduler & airflow webserver
+      "
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/nbu:/opt/airflow/nbu
+      - ./pyproject.toml:/opt/airflow/pyproject.toml
+      - airflow_deps:/usr/local/lib/python3.12/site-packages
+      - airflow_data:/opt/airflow
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.10
+    container_name: clickhouse
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT}:8123"
+      - "${CLICKHOUSE_PORT}:9000"
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+volumes:
+  postgres_data:
+  airflow_data:
+  airflow_deps:
+  clickhouse_data:
