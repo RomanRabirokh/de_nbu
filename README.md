@@ -156,7 +156,7 @@ make migrate-up
 ### Install / Run Python Commands (Poetry)
 
 ```bash
-make poentry CMD="add requests"
+make poetry CMD="add requests"
 ```
 
 * Executes Poetry commands inside the Airflow container
@@ -359,7 +359,7 @@ make migrate-up
 ### Керування Python-залежностями
 
 ```bash
-make poentry CMD="add requests"
+make poetry CMD="add requests"
 ```
 
 * Запускає команди Poetry всередині контейнера Airflow

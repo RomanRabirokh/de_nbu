@@ -38,7 +38,7 @@ airflow-init:
 		--email ${AIRFLOW_ADMIN_EMAIL}
 
 # command to install new python packages
-poentry:
+poetry:
 	docker compose exec airflow poetry $(CMD)
 
 # performs migrations for ClickHouse, from the src/migrations/clickhouse folder
